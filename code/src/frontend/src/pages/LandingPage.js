@@ -10,6 +10,7 @@ function LandingPage() {
     const [ciInformation, setCiInformation] = useState([]);
     const [upstreamInfo, setupstreamInfo] = useState([]);
     const [downstreamInfo, setdownstreamInfo] = useState([]);
+    const [incidentsInfo, setIncidentsInfo] = useState([]);
     const [ciNum, setciNum] = useState("");
     const [ip, setip] = useState("");
     const [loading, setLoading] = useState(false);
@@ -29,8 +30,6 @@ function LandingPage() {
 
         try {
             const response = await axios.get(`http://localhost:5000/get-incident-details/${incidentNumber}`);
-            console.log("hereeee");
-            console.log(response);
 
             setSummary(`Summary for ticket: ${incidentNumber} - ${response.data.short_description}`);
 
@@ -39,13 +38,18 @@ function LandingPage() {
             try {
                 const response = await axios.get(`http://localhost:5000/get-all-related-data/${ciNum}`);
                 console.log("all data: ", response)
+
                 setCiInformation(response.data.related_cis);
-                console.log(ciInformation);
                 const downstream = ciInformation.filter((record) => record.direction == 'Downstream').map(obj => ({ name: obj.name, relationship_type: obj.relationship_type, type: obj.type }));
                 setdownstreamInfo(downstream);
                 const upstream = ciInformation.filter((record) => record.direction == 'Upstream').map(obj => ({ name: obj.name, relationship_type: obj.relationship_type, type: obj.type }));;
                 setupstreamInfo(upstream);
-                setRelatedRecords(response.data.related_Records)
+
+                setRelatedRecords(response.data.related_records)
+                const change_requests = relatedRecords.change_requests;
+                //const incidents = relatedRecords.incidents.map(inc => ({ number: inc.number }));
+                setIncidentsInfo(relatedRecords.incidents);
+                const problem_tickets = relatedRecords.problem_tickets;
             }
             catch (err) {
                 console.error("Error fetching all details:", err);
@@ -95,17 +99,21 @@ function LandingPage() {
 
                     <div style={styles.box}>
                         <h2>Related Incidents</h2>
-                        {/* <ul>
-                            {relatedIncidents.length > 0 ? (
-                                relatedIncidents.map((incident) => (
-                                    <li key={incident.id}>
-                                        <a href={incident.url} style={styles.link}>{incident.text}</a>
-                                    </li>
-                                ))
-                            ) : (
-                                <p>No related incidents found.</p>
-                            )}
-                        </ul> */}
+                        {incidentsInfo && incidentsInfo.length > 0 ? (
+                            incidentsInfo.map((incident) => (
+                                <details key={incident.number} style={styles.details}>
+                                    <summary style={styles.summary}>{incident.number}</summary>
+                                    <p>Opened at: {incident.opened_at}</p>
+                                    <p>Priority: {incident.priority}</p>
+                                    <p>Short description: {incident.short_description}</p>
+                                    <p>State: {incident.state}</p>
+                                    {/* <p>CI name: {incident.ci.name}</p> */}
+
+                                </details>
+                            ))
+                        ) : (
+                            <p>No related incidents found.</p>
+                        )}
                     </div>
 
                     <div style={styles.box}>
@@ -221,6 +229,18 @@ const styles = {
         textDecoration: "none",
         fontWeight: "bold",
     },
+    details: {
+        border: "1px solid #8B0000",
+        borderRadius: "5px",
+        padding: "10px",
+        marginBottom: "10px",
+        backgroundColor: "#f8f8f8",
+        cursor: "pointer",
+    },
+    summary: {
+        fontWeight: "bold",
+        cursor: "pointer",
+    }
 };
 
 export default LandingPage;
