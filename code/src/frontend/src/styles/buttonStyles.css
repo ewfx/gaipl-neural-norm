@@ -1,0 +1,28 @@
+.styledButton {
+    display: inline-block;
+    margin: 20px;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: white;
+    background-color: #07386c;
+    border-radius: 5px;
+    font-size: 18px;
+}
+
+.styledInput {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.styledInput:focus {
+    border-color: #007BFF;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    outline: none;
+}

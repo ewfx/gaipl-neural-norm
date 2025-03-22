@@ -1,0 +1,40 @@
+.table-container {
+    margin: 20px auto;
+    padding: 15px;
+    border: 1px solid #444; /* Darker border */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Subtle shadow for depth */
+    background-color: #222; /* Dark background */
+    color: #eee; /* Light text */
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #ddd; /* Light text for table content */
+}
+
+.table th,
+.table td {
+    padding: 10px;
+    border: 1px solid #444; /* Darker border */
+    text-align: left;
+}
+
+.table th {
+    background-color: #333; /* Slightly lighter dark background for header */
+    font-weight: bold;
+    color: #fff; /* White text for headers */
+}
+
+.table tr:nth-of-type(odd) {
+    background-color: #2a2a2a; /* Darker row background */
+}
+
+.table tr:nth-of-type(even) {
+    background-color: #1f1f1f; /* Even darker row background */
+}
+
+.tableContent {
+    color: #ddd !important;
+}
