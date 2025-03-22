@@ -21,9 +21,6 @@ function LandingPage() {
 
     return (
         <div style={styles.container}>
-            <nav style={styles.navbar}>
-                <h1 style={styles.navTitle}>Integrated Platform Support Dashboard</h1>
-            </nav>
             <div style={{ textAlign: "center", marginTop: "50px" }}>
                 <input
                     type="text"
@@ -117,19 +114,7 @@ const styles = {
         textAlign: "center",
         backgroundColor: "#EAD196",
         paddingBottom: "30px",
-    },
-    navbar: {
-        backgroundColor: "#BF3131", 
-        padding: "15px 0",
-        color: "white",
-        textAlign: "center",
-        borderBottom: "1px solid #8B0000",
-        marginTop: "20px",
-    },
-    navTitle: {
-        margin: 0,
-        fontSize: "24px",
-    },
+    },    
     input: {
         padding: "10px",
         fontSize: "16px",
