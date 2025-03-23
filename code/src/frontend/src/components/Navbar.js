@@ -28,8 +28,7 @@ const styles = {
         alignItems: "center",
         justifyContent: "space-between",
         padding: "10px 20px",
-        backgroundColor: "#7D0A0A",
-        backgroundColor: "#BF3131", 
+        backgroundColor: "#D84040", 
         /*padding: "15px 0",*/
         color: "white",
         textAlign: "center",

@@ -15,6 +15,17 @@ function LandingPage() {
     const [ip, setip] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [expandedPanel, setExpandedPanel] = useState(null);
+    const [expandPanel, setExpandPanel] = useState(null);
+
+
+    const togglePanel = (panel) => {
+        setExpandedPanel(expandedPanel === panel ? null : panel);
+    };
+
+    const expandPanelCI = (panel) => {
+        setExpandPanel(expandPanel == panel ? null : panel)
+    }
 
     useEffect(() => {
         const savedIncident = localStorage.getItem("incidentNumber");
@@ -46,10 +57,7 @@ function LandingPage() {
                 setupstreamInfo(upstream);
 
                 setRelatedRecords(response.data.related_records)
-                const change_requests = relatedRecords.change_requests;
-                //const incidents = relatedRecords.incidents.map(inc => ({ number: inc.number }));
                 setIncidentsInfo(relatedRecords.incidents);
-                const problem_tickets = relatedRecords.problem_tickets;
             }
             catch (err) {
                 console.error("Error fetching all details:", err);
@@ -93,66 +101,141 @@ function LandingPage() {
             {showSummary && (
                 <div style={styles.gridContainer}>
                     <div style={styles.summaryBox}>
-                        <h2>Summary</h2>
+                        <h2 style={{ textAlign: "center" }}>Summary</h2>
                         <p>{summary}</p>
                     </div>
 
                     <div style={styles.box}>
-                        <h2>Related Incidents</h2>
-                        {incidentsInfo && incidentsInfo.length > 0 ? (
-                            incidentsInfo.map((incident) => (
-                                <details key={incident.number} style={styles.details}>
-                                    <summary style={styles.summary}>{incident.number}</summary>
-                                    <p>Opened at: {incident.opened_at}</p>
-                                    <p>Priority: {incident.priority}</p>
-                                    <p>Short description: {incident.short_description}</p>
-                                    <p>State: {incident.state}</p>
-                                    {/* <p>CI name: {incident.ci.name}</p> */}
+                        <h2 style={{ textAlign: "center" }}>Related Issues</h2>
+                        <div style={styles.panel}>
+                            <div style={styles.panelHeader} onClick={() => togglePanel("incidents")}>
+                                <span>Related Incidents</span>
+                                <span>{expandedPanel === "incidents" ? "▼" : "▶"}</span>
+                            </div>
+                            {expandedPanel === "incidents" && (
+                                <div style={styles.panelContent}>
+                                    {incidentsInfo && incidentsInfo.length > 0 ? (
+                                        incidentsInfo.map((incident) => (
+                                            <div key={incident.number} style={styles.subPanel}>
+                                                <p><strong>Number:</strong> {incident.number}</p>
+                                                <p><strong>Opened at:</strong> {incident.opened_at}</p>
+                                                <p><strong>Priority:</strong> {incident.priority}</p>
+                                                <p><strong>Short description:</strong> {incident.short_description}</p>
+                                                <p><strong>State:</strong> {incident.state}</p>
+                                                <p><strong>CI Name:</strong> {incident.ci.name}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p>No related incidents found.</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
-                                </details>
-                            ))
-                        ) : (
-                            <p>No related incidents found.</p>
-                        )}
+                        <div style={styles.panel}>
+                            <div style={styles.panelHeader} onClick={() => togglePanel("changeRequests")}>
+                                <span>Related Change Requests</span>
+                                <span>{expandedPanel === "changeRequests" ? "▼" : "▶"}</span>
+                            </div>
+                            {expandedPanel === "changeRequests" && (
+                                <div style={styles.panelContent}>
+                                    {relatedRecords.change_requests && relatedRecords.change_requests.length > 0 ? (
+                                        relatedRecords.change_requests.map((change) => (
+                                            <div key={change.number} style={styles.subPanel}>
+                                                <p><strong>Number:</strong> {change.number}</p>
+                                                <p><strong>Opened at:</strong> {change.opened_at}</p>
+                                                <p><strong>Priority:</strong> {change.priority}</p>
+                                                <p><strong>Description:</strong> {change.description}</p>
+                                                <p><strong>State:</strong> {change.state}</p>
+                                                <p><strong>CI Name:</strong> {change.ci.name}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p>No related change requests found.</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={styles.panel}>
+                            <div style={styles.panelHeader} onClick={() => togglePanel("problemTickets")}>
+                                <span>Related Problem Tickets</span>
+                                <span>{expandedPanel === "problemTickets" ? "▼" : "▶"}</span>
+                            </div>
+                            {expandedPanel === "problemTickets" && (
+                                <div style={styles.panelContent}>
+                                    {relatedRecords.problem_tickets && relatedRecords.problem_tickets.length > 0 ? (
+                                        relatedRecords.problem_tickets.map((problem) => (
+                                            <div key={problem.number} style={styles.subPanel}>
+                                                <p><strong>Number:</strong> {problem.number}</p>
+                                                <p><strong>Opened at:</strong> {problem.opened_at}</p>
+                                                <p><strong>Priority:</strong> {problem.priority}</p>
+                                                <p><strong>Description:</strong> {problem.short_description}</p>
+                                                <p><strong>State:</strong> {problem.state}</p>
+                                                <p><strong>CI Name:</strong> {problem.ci.name}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p>No related problem tickets found.</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div style={styles.box}>
-                        <h2>CI Information</h2>
-                        <p>CI Number: {ciNum}</p>
-                        <p>IP Address: {ip}</p>
-                        <ol>
-                            <li>Downstream</li>
-                            {
-                                <ul>
+                        <h2 style={{ textAlign: "center" }}>CI Information</h2>
+                        <p><strong>CI Number: </strong>{ciNum !== null && ciNum !== undefined ? ciNum : "N/A"}</p>
+                        <p><strong>IP Address: </strong>{ip !== null && ip !== undefined ? ip : "N/A"}</p>
+
+                        <div style={styles.panel}>
+                            <div style={styles.panelHeader} onClick={() => expandPanelCI("downstream")}>
+                                <span>Downstream</span>
+                                <span>{expandPanel === "downstream" ? "▼" : "▶"}</span>
+                            </div>
+                            {expandPanel === "downstream" && (
+                                <div style={styles.panelContent}>
                                     {downstreamInfo.length > 0 ? (
                                         downstreamInfo.map((dp) => (
-                                            <li key={dp.name}>
-                                                <p>Name: {dp.name}, Relationship: {dp.relationship_type}, Type: {dp.type}</p>
-                                            </li>
+                                            <div style={styles.panelContent}>
+                                                <p><strong>Name: </strong>{dp.name} </p>
+                                                <p><strong>Relationship: </strong>{dp.relationship_type}</p>
+                                                <p><strong>Type: </strong>{dp.type}</p>
+                                            </div>
                                         ))
                                     ) : (
                                         <p>No CI Information found.</p>
                                     )}
-                                </ul>}
-                            <li>Upstream</li>
-                            {
-                                <ul>
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={styles.panel}>
+                            <div style={styles.panelHeader} onClick={() => expandPanelCI("upstream")}>
+                                <span>Upstream</span>
+                                <span>{expandPanel === "upstream" ? "▼" : "▶"}</span>
+                            </div>
+                            {expandPanel === "upstream" && (
+                                <div style={styles.panelContent}>
                                     {upstreamInfo.length > 0 ? (
                                         upstreamInfo.map((dp) => (
-                                            <li key={dp.name}>
-                                                <p>Name: {dp.name}, Relationship: {dp.relationship_type}, Type:{dp.type}</p>
-                                            </li>
+                                            <div style={styles.panelContent}>
+                                                <p><strong>Name: </strong>{dp.name} </p>
+                                                <p><strong>Relationship: </strong>{dp.relationship_type}</p>
+                                                <p><strong>Type: </strong>{dp.type}</p>
+                                            </div>
                                         ))
                                     ) : (
                                         <p>No CI Information found.</p>
                                     )}
-                                </ul>}
-                        </ol>
-
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div style={styles.box}>
-                        <h2>Recommended playbooks</h2>
+                        <h2 style={{ textAlign: "center" }}>Recommended playbooks</h2>
+
                         {/* <ul>
                             {ciInformation.length > 0 ? (
                                 ciInformation.map((ci, index) => (
@@ -176,7 +259,7 @@ const styles = {
         width: "95%",
         margin: "auto",
         textAlign: "center",
-        backgroundColor: "#EAD196",
+        backgroundColor: "#ECDCBF",
         paddingBottom: "30px",
     },
     input: {
@@ -191,7 +274,7 @@ const styles = {
         padding: "10px 15px",
         marginLeft: "10px",
         fontSize: "16px",
-        backgroundColor: "#8B0000",
+        backgroundColor: "#A31D1D",
         color: "white",
         border: "none",
         borderRadius: "3px",
@@ -200,7 +283,8 @@ const styles = {
     },
     gridContainer: {
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
+        gridTemplateColumns: "repeat(2, 1fr)", /* Two equal columns */
+        alignItems: "stretch", /* Ensures all boxes stay the same height */
         gap: "20px",
         marginTop: "20px",
     },
@@ -240,7 +324,34 @@ const styles = {
     summary: {
         fontWeight: "bold",
         cursor: "pointer",
-    }
+    },
+    panel: {
+        border: "1px solid #8B0000",
+        borderRadius: "5px",
+        marginBottom: "10px",
+        backgroundColor: "#f8f8f8",
+    },
+    panelHeader: {
+        padding: "10px",
+        fontWeight: "bold",
+        cursor: "pointer",
+        display: "flex",
+        justifyContent: "space-between",
+        backgroundColor: "#ECDCBF",
+        borderRadius: "5px 5px 0 0",
+    },
+    panelContent: {
+        padding: "10px",
+        backgroundColor: "#fff",
+        borderRadius: "0 0 5px 5px",
+    },
+    subPanel: {
+        border: "1px solid #ccc",
+        padding: "10px",
+        marginBottom: "5px",
+        borderRadius: "3px",
+        backgroundColor: "#fdfdfd",
+    },
 };
 
 export default LandingPage;
