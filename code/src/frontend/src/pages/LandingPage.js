@@ -40,38 +40,81 @@ function LandingPage() {
         setShowSummary(false);
 
         try {
-            const response = await axios.get(`http://localhost:5000/get-incident-details/${incidentNumber}`);
+            // First API call: Get Incident Details
+            const incidentResponse = await axios.get(`http://localhost:5000/get-incident-details/${incidentNumber}`);
+            const incidentData = incidentResponse.data;
 
-            setSummary(`Summary for ticket: ${incidentNumber} - ${response.data.short_description}`);
+            // Update state for incident details
+            setSummary(`Summary for ticket: ${incidentNumber} - ${incidentData.short_description}`);
+            setciNum(incidentData.cmdb_ci.name);
+            setip(incidentData.cmdb_ci.ip_address);
 
-            setciNum(response.data.cmdb_ci.name);
-            setip(response.data.cmdb_ci.ip_address);
+            // Ensure ciNum is properly updated before making the second API call
+            if (!incidentData.cmdb_ci.name) {
+                throw new Error("CI Name is missing, cannot fetch related data.");
+            }
+
+            // Second API call: Get related data
+            const relatedDataResponse = await axios.get(`http://localhost:5000/get-all-related-data/${incidentData.cmdb_ci.name}`);
+            const relatedData = relatedDataResponse.data;
+            console.log("All related data: ", relatedData);
+
+            // Update state for related CIs
+            setCiInformation(relatedData.related_cis);
+
+            // Process upstream & downstream relationships
+            const downstream = relatedData.related_cis
+                .filter((record) => record.direction === 'Downstream')
+                .map(obj => ({ name: obj.name, relationship_type: obj.relationship_type, type: obj.type }));
+            setdownstreamInfo(downstream);
+
+            const upstream = relatedData.related_cis
+                .filter((record) => record.direction === 'Upstream')
+                .map(obj => ({ name: obj.name, relationship_type: obj.relationship_type, type: obj.type }));
+            setupstreamInfo(upstream);
+
+            // Update related records
+            setRelatedRecords(relatedData.related_records);
+            setIncidentsInfo(relatedData.related_records?.incidents || []);
+
+            // Third API call: Generate Summary
             try {
-                const response = await axios.get(`http://localhost:5000/get-all-related-data/${ciNum}`);
-                console.log("all data: ", response)
+                const summaryResponse = await axios.post('http://localhost:5000/generate-summary', {
+                    description: incidentData.short_description,
+                });
 
-                setCiInformation(response.data.related_cis);
-                const downstream = ciInformation.filter((record) => record.direction == 'Downstream').map(obj => ({ name: obj.name, relationship_type: obj.relationship_type, type: obj.type }));
-                setdownstreamInfo(downstream);
-                const upstream = ciInformation.filter((record) => record.direction == 'Upstream').map(obj => ({ name: obj.name, relationship_type: obj.relationship_type, type: obj.type }));;
-                setupstreamInfo(upstream);
+                console.log("Raw JSON response: ", summaryResponse);
+                /* const summaryResponse = {
+                    "result": "{\"role\":\"model\",\"parts\":[{\"text\":\"```json\\n{\\n  \\\"text\\\": \\\"Based on the provided incident reports, the 'apache service is down' issue seems to be occurring across multiple nodes, suggesting a potential systemic problem rather than isolated server failures.  While individual server restarts (BSOD) and monitoring agent restarts have resolved some instances, the recurring nature and spread across different nodes points to a broader issue.  Let's investigate further.\\\",\\n  \\\"solutions\\\": [\\n    {\\n      \\\"title\\\": \\\"Network Connectivity Issues\\\",\\n      \\\"likelihood\\\": \\\"High\\\",\\n      \\\"confidence\\\": \\\"0.8\\\",\\n      \\\"reasoning\\\": \\\"A significant number of incidents cite 'network flip' as the root cause.  This suggests a network-level problem impacting the ability of nodes to communicate with BBC and each other.  This could be a DNS resolution issue, firewall rules, routing problems, or a broader network outage.\\\"\\n    },\\n    {\\n      \\\"title\\\": \\\"System-Wide Configuration Problem\\\",\\n      \\\"likelihood\\\": \\\"Medium\\\",\\n      \\\"confidence\\\": \\\"0.6\\\",\\n      \\\"reasoning\\\": \\\"If the network is stable, a misconfiguration in the Apache setup across multiple servers could be the culprit. This could involve incorrect settings in the Apache configuration files, shared configuration repositories, or issues with the deployment process.\\\"\\n    }\\n  ],\\n  \\\"script\\\": \\\"#!/bin/bash\\\\n\\\\n# Check Network Connectivity\\\\nping -c 3 bbc.example.com  # Replace bbc.example.com with the actual address\\\\nif [ $? -ne 0 ]; then\\\\n  echo \\\\\\\"Network connectivity to BBC is down. Investigate network issues.\\\\\\\"\\\\nexit 1\\\\nfi\\\\n\\\\n# Check Apache Status\\\\n\\\\n# Check Apache Configuration (if network connectivity is good)\\\\n\\\\n# Check Server Logs\\\\n\\\",\\n  \\\"logPath\\\": \\\"/var/log/apache2/error.log\\\",\\n  \\\"restartCommand\\\": \\\"sudo systemctl restart apache2\\\"\\n}\\n```\\n\"}]}"
+                }; */
 
-                setRelatedRecords(response.data.related_records)
-                setIncidentsInfo(relatedRecords.incidents);
+                // Parse response
+                const outerParsed = JSON.parse(summaryResponse.data.result);
+                let jsonText = outerParsed.parts[0].text.trim();
+
+                if (jsonText.startsWith("```json")) {
+                    jsonText = jsonText.slice(7);
+                }
+                jsonText = jsonText.slice(0, -4).trim();
+
+                // Convert JSON text to object
+                const parsedData = JSON.parse(jsonText);
+                console.log("Final parsed summary: ", parsedData);
+
+                setSummary(parsedData);
+            } catch (summaryErr) {
+                console.error("Error generating summary:", summaryErr);
+                setError("Failed to generate summary.");
             }
-            catch (err) {
-                console.error("Error fetching all details:", err);
-                setError("Failed to fetch all details. Please try again.");
-            }
+
             setShowSummary(true);
         } catch (err) {
-            console.error("Error fetching incident details:", err);
-            setError("Failed to fetch incident details. Please try again.");
+            console.error("Error: ", err);
+            setError(err.message || "Something went wrong. Please try again.");
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
-
     const handleSubmit = () => {
         if (!inputValue.trim()) {
             setError("Please enter a valid incident number.");
@@ -100,9 +143,55 @@ function LandingPage() {
 
             {showSummary && (
                 <div style={styles.gridContainer}>
-                    <div style={styles.summaryBox}>
-                        <h2 style={{ textAlign: "center" }}>Summary</h2>
-                        <p>{summary}</p>
+
+                    <div style={styles.box}>
+                        <h2 style={{ textAlign: "center" }}>CI Information</h2>
+                        <p><strong>CI Number: </strong>{ciNum !== null && ciNum !== undefined ? ciNum : "N/A"}</p>
+                        <p><strong>IP Address: </strong>{ip !== null && ip !== undefined ? ip : "N/A"}</p>
+
+                        <div style={styles.panel}>
+                            <div style={styles.panelHeader} onClick={() => expandPanelCI("downstream")}>
+                                <span>Downstream Apps</span>
+                                <span>{expandPanel === "downstream" ? "▼" : "▶"}</span>
+                            </div>
+                            {expandPanel === "downstream" && (
+                                <div style={styles.panelContent}>
+                                    {downstreamInfo.length > 0 ? (
+                                        downstreamInfo.map((dp) => (
+                                            <div style={styles.panelContent}>
+                                                <p><strong>Name: </strong>{dp.name} </p>
+                                                <p><strong>Relationship: </strong>{dp.relationship_type}</p>
+                                                <p><strong>Type: </strong>{dp.type}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p>No CI Information found.</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={styles.panel}>
+                            <div style={styles.panelHeader} onClick={() => expandPanelCI("upstream")}>
+                                <span>Upstream Apps</span>
+                                <span>{expandPanel === "upstream" ? "▼" : "▶"}</span>
+                            </div>
+                            {expandPanel === "upstream" && (
+                                <div style={styles.panelContent}>
+                                    {upstreamInfo.length > 0 ? (
+                                        upstreamInfo.map((dp) => (
+                                            <div style={styles.panelContent}>
+                                                <p><strong>Name: </strong>{dp.name} </p>
+                                                <p><strong>Relationship: </strong>{dp.relationship_type}</p>
+                                                <p><strong>Type: </strong>{dp.type}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p>No CI Information found.</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div style={styles.box}>
@@ -183,70 +272,41 @@ function LandingPage() {
                         </div>
                     </div>
 
-                    <div style={styles.box}>
-                        <h2 style={{ textAlign: "center" }}>CI Information</h2>
-                        <p><strong>CI Number: </strong>{ciNum !== null && ciNum !== undefined ? ciNum : "N/A"}</p>
-                        <p><strong>IP Address: </strong>{ip !== null && ip !== undefined ? ip : "N/A"}</p>
 
-                        <div style={styles.panel}>
-                            <div style={styles.panelHeader} onClick={() => expandPanelCI("downstream")}>
-                                <span>Downstream</span>
-                                <span>{expandPanel === "downstream" ? "▼" : "▶"}</span>
-                            </div>
-                            {expandPanel === "downstream" && (
-                                <div style={styles.panelContent}>
-                                    {downstreamInfo.length > 0 ? (
-                                        downstreamInfo.map((dp) => (
-                                            <div style={styles.panelContent}>
-                                                <p><strong>Name: </strong>{dp.name} </p>
-                                                <p><strong>Relationship: </strong>{dp.relationship_type}</p>
-                                                <p><strong>Type: </strong>{dp.type}</p>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p>No CI Information found.</p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
 
-                        <div style={styles.panel}>
-                            <div style={styles.panelHeader} onClick={() => expandPanelCI("upstream")}>
-                                <span>Upstream</span>
-                                <span>{expandPanel === "upstream" ? "▼" : "▶"}</span>
+                    <div style={styles.summaryBox}>
+                        <h2 style={{ textAlign: "center" }}>Summary</h2>
+                        <p>{summary.text}</p>
+
+                        <h3>Possible Solutions & Analysis</h3>
+                        {summary.solutions.map((solution, index) => (
+                            <div key={index} style={{ marginBottom: "15px", padding: "10px", border: "1px solid #ddd", borderRadius: "5px" }}>
+                                <h4>{solution.title}</h4>
+                                <p><strong>Likelihood of Success:</strong> {solution.likelihood}</p>
+                                <p><strong>Confidence Score:</strong> {solution.confidence}</p>
+                                <p><strong>Reasoning:</strong> {solution.reasoning}</p>
                             </div>
-                            {expandPanel === "upstream" && (
-                                <div style={styles.panelContent}>
-                                    {upstreamInfo.length > 0 ? (
-                                        upstreamInfo.map((dp) => (
-                                            <div style={styles.panelContent}>
-                                                <p><strong>Name: </strong>{dp.name} </p>
-                                                <p><strong>Relationship: </strong>{dp.relationship_type}</p>
-                                                <p><strong>Type: </strong>{dp.type}</p>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p>No CI Information found.</p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                        ))}
+
+                        <h3>Resolution Script</h3>
+                        <pre style={{ background: "#f4f4f4", padding: "10px", borderRadius: "5px", overflowX: "auto" }}>
+                            {summary.script}
+                        </pre>
+
+                        <h4>Log Path:</h4>
+                        <p>{summary.logPath}</p>
+
+                        <h4>Restart Command:</h4>
+                        <pre style={{ background: "#f4f4f4", padding: "5px", borderRadius: "5px" }}>
+                            {summary.restartCommand}
+                        </pre>
+
                     </div>
 
                     <div style={styles.box}>
                         <h2 style={{ textAlign: "center" }}>Recommended playbooks</h2>
 
-                        {/* <ul>
-                            {ciInformation.length > 0 ? (
-                                ciInformation.map((ci, index) => (
-                                    <li key={index}>
-                                        <strong>{ci.key}:</strong> {ci.value}
-                                    </li>
-                                ))
-                            ) : (
-                                <p>No CI information available.</p>
-                            )}
-                        </ul> */}
+                        <button style={styles.button}>Run Playbook</button>
                     </div>
                 </div>
             )}

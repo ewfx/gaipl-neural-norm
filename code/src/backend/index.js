@@ -6,8 +6,7 @@ const axios = require("axios");
 const cors = require("cors");
 const { genai, types } = require('@google-cloud/vertexai');
 const { VertexAI } = require("@google-cloud/vertexai");
-
-
+const fs = require('fs');
 
 const app = express();
 const PORT = 5000;
@@ -15,13 +14,14 @@ const PORT = 5000;
 app.use(express.json());
 app.use(cors());
 
-const project = '383753837684';
-const location = 'us-central1';
-const textModel = 'gemini-2_0-flash-001';
-const modelendpt = "projects/383753837684/locations/us-central1/endpoints/6790061545121382400"
+const vertex_ai = new VertexAI({ project: '383753837684', location: 'us-east1' });
+const model = 'projects/383753837684/locations/us-east1/endpoints/5109839552600604672';
 
-const vertexAI = new VertexAI({ project: project, location: location });
-const model = vertexAI.getGenerativeModel({ model: modelendpt });
+const siText1Content = fs.readFileSync('./prompt.txt', 'utf8');
+
+const siText1 = {
+    text: siText1Content
+};
 
 
 app.get("/get-incident-details/:incident_number", async (req, res) => {
@@ -71,59 +71,90 @@ app.get("/get-all-related-data/:ci_name", async (req, res) => {
 
 app.post("/generate-summary", async (req, res) => {
     try {
-        const contents = [
-            {
-                role: "user",
-                parts: [
-                    {
-                        text: `Using the data you were tuned on, act as a systems operation support engineer and give ranked possible resolution steps/information for the incident with the following details:
-        
-        Incident Description: Failed to contact node ABC-APP-24 with BBC. Probably the node is down or there's a network problem. (OpC40-1911)
-        Short Description: Failed to contact node
-        Category: Hardware
-        Configuration Item (CI): ABC-APP-24
-        Impact: 2 - Medium
-        Opened At: 22-03-2025 07:42`
-                    }
-                ]
-            }
-        ];
-
-        var request = {
-            model: {
-                name: 'projects/383753837684/locations/us-central1/endpoints/6790061545121382400',
-                version: 'default'
+        const { description } = req.body;
+        const generativeModel = vertex_ai.preview.getGenerativeModel({
+            model: model,
+            generationConfig: {
+                maxOutputTokens: 1024,
+                temperature: 0.2,
+                topP: 0.8,
             },
-            inputs: {
-                'text': 'Hello'
+            safetySettings: [
+                {
+                    category: 'HARM_CATEGORY_HATE_SPEECH',
+                    threshold: 'OFF',
+                },
+                {
+                    category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                    threshold: 'OFF',
+                },
+                {
+                    category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                    threshold: 'OFF',
+                },
+                {
+                    category: 'HARM_CATEGORY_HARASSMENT',
+                    threshold: 'OFF',
+                }
+            ],
+            systemInstruction: {
+                parts: [siText1]
+            },
+        });
+
+
+        const chat = generativeModel.startChat({});
+        const message = `Act like an expert Systech/Sys admin with decades of experience. Utilize the data I have provided as context to answer an issue I have. 
+        Utilize the existing context first and then utilize your knowledge to help me find a resolution. 
+        Give me an answer in the following JSON format {
+        "text": "",
+        "solutions": [
+            {
+            "title": "",
+            "likelihood": "",
+            "confidence": "",
+            "reasoning": ""
             }
-        };
+        ],
+        "script": "",
+        "logPath": "",
+        "restartCommand": ""
+        } 
+        An explantion of these json fields is as follows: Provide an explanation of the possible solutions. Rank them based on the likelihood of success. 
+        Give me the confidence score of each solution as well. At the end, provide a script to resolve the problem. I need to be able to parse this json so do not include any characters that cannot be parsed. 
+        Here is the issue: Incident description: ${description}`;
 
+        const streamResult = await chat.sendMessageStream(message);
+        const output = JSON.stringify((await streamResult.response).candidates[0].content) || "No response generated.";
 
-        const generateContentConfig = {
-            temperature: 1,
-            topP: 0.95,
-            maxOutputTokens: 8192,
-            responseModalities: ["TEXT"], // Ensuring only text responses
-        };
-
-        // Generate response from model
-         const response = await model.generateContent({
-             contents,
-             generationConfig: generateContentConfig,
-         });
-         console.log("Sending request to Vertex AI:", JSON.stringify({ contents, generateContentConfig }, null, 2));
- 
-         // Extract text response
-         console.log("Response: ", response);
-         const output = response?.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
- 
-         res.json({ result: output });
+        res.json({ result: output });
 
     } catch (error) {
         console.error("Error generating summary:", error.response?.data || error.message);
         res.status(500).json({ error: "Failed to generate content" });
     }
 });
+
+
+app.get("/logs", async (req, res) => {
+    try {
+      const [entries] = await logging.getEntries({
+        resourceNames: [`projects/383753837684`],
+        orderBy: "timestamp desc",
+        pageSize: 5,
+      });
+  
+      const logs = entries.map((entry, index) => ({
+        index: index + 1,
+        timestamp: entry.timestamp,
+        logData: entry.data,
+      }));
+  
+      res.json({ logs });
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+      res.status(500).json({ error: "Failed to fetch logs" });
+    }
+  });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
