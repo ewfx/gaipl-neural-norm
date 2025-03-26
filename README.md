@@ -1,9 +1,9 @@
 # 🚀 UNITI - Unified Networked Infra & Tech Intelligence
 
 ## 📌 Table of Contents
-- [Introduction](#Introduction)
-- [Demo](#Demo)
-- [Inspiration](#Inspiration)
+- [Introduction](#introduction)
+- [Demo](#demo)
+- [Inspiration](#inspiration)
 - [What It Does](#what-it-does)
 - [How We Built It](#how-we-built-it)
 - [Challenges We Faced](#challenges-we-faced)
