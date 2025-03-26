@@ -17,6 +17,7 @@ function LandingPage() {
     const [error, setError] = useState(null);
     const [expandedPanel, setExpandedPanel] = useState(null);
     const [expandPanel, setExpandPanel] = useState(null);
+    const [logs, setLogs] = useState([]);
 
 
     const togglePanel = (panel) => {
@@ -30,6 +31,7 @@ function LandingPage() {
     useEffect(() => {
         const savedIncident = localStorage.getItem("incidentNumber");
         if (savedIncident) {
+
             fetchIncidentDetails(savedIncident);
         }
     }, []);
@@ -115,12 +117,29 @@ function LandingPage() {
             setLoading(false);
         }
     };
+
+    const getLogs = async () => {
+        try {
+            console.log("IN LOGS");
+            const logsdata = await axios.get(`http://localhost:5000/logs`);
+            //const logsdata = `{"entries":[{"insertId":"akr40tc19k","jsonPayload":{"endpoint":"projects/383753837684/locations/us-east1/endpoints/2408805676085149696","deployedModelId":"2280857706984112128","@type":"type.googleapis.com/google.cloud.aiplatform.logging.OnlinePredictionLogEntry"},"resource":{"type":"aiplatform.googleapis.com/Endpoint","labels":{"resource_container":"bamboo-cairn-454605-s9","location":"us-east1","endpoint_id":"2408805676085149696"}},"timestamp":"2025-03-24T08:46:03.419146618Z","logName":"projects/bamboo-cairn-454605-s9/logs/aiplatform.googleapis.com%2Fprediction_access","receiveTimestamp":"2025-03-24T08:46:04.749456990Z"},{"insertId":"13es12qbqs","jsonPayload":{"@type":"type.googleapis.com/google.cloud.aiplatform.logging.OnlinePredictionLogEntry","endpoint":"projects/383753837684/locations/us-east1/endpoints/2408805676085149696","deployedModelId":"2280857706984112128"},"resource":{"type":"aiplatform.googleapis.com/Endpoint","labels":{"endpoint_id":"2408805676085149696","resource_container":"bamboo-cairn-454605-s9","location":"us-east1"}},"timestamp":"2025-03-24T08:46:02.332685557Z","logName":"projects/bamboo-cairn-454605-s9/logs/aiplatform.googleapis.com%2Fprediction_access","receiveTimestamp":"2025-03-24T08:46:03.223502984Z"},{"insertId":"1thc91sc1iq","jsonPayload":{"deployedModelId":"2280857706984112128","endpoint":"projects/383753837684/locations/us-east1/endpoints/2408805676085149696","@type":"type.googleapis.com/google.cloud.aiplatform.logging.OnlinePredictionLogEntry"},"resource":{"type":"aiplatform.googleapis.com/Endpoint","labels":{"resource_container":"bamboo-cairn-454605-s9","endpoint_id":"2408805676085149696","location":"us-east1"}},"timestamp":"2025-03-24T08:45:59.613777687Z","logName":"projects/bamboo-cairn-454605-s9/logs/aiplatform.googleapis.com%2Fprediction_access","receiveTimestamp":"2025-03-24T08:46:01.299987338Z"}],"nextPageToken":"epABCosBAfQucPgafMQn8HMSL7E5eTE-OHz5U3cNUZb7VLsrKbkvjgARRuZ4vNU9pJEpa5F8OdXuUxrWDUkYt19pgzSQc3corUtyyUcgdSXzCZi-kex9Ty-Qt0TCytd-ZmkSYISaBVGdhoVMQx_HzQGaftLxe5K6doByp5lzD5oFUf_6yCAjvdrUiaCcaGlERBAA"}`
+            const data = logsdata.data;
+            console.log("LogsData: ", data.entries);
+            setLogs(data.entries);
+        }
+        catch (err) {
+            console.error("Error fetching logs:", err);
+            setError(err.message || "Something went wrong. Please try again.");
+        }
+    }
+
     const handleSubmit = () => {
         if (!inputValue.trim()) {
             setError("Please enter a valid incident number.");
             return;
         }
-
+        console.log("ingetlogs");
+        getLogs();
         localStorage.setItem("incidentNumber", inputValue);
         fetchIncidentDetails(inputValue);
     };
@@ -272,10 +291,34 @@ function LandingPage() {
                         </div>
                     </div>
 
-
+                    <div style={styles.fullBox}>
+                        <h2 style={{ textAlign: "center" }}>Logs</h2>
+                        <div style={styles.logscontainer}>
+                            {logs.length === 0 ? (
+                                <p>No logs available.</p>
+                            ) : (
+                                logs.map((log, index) => (
+                                    <div key={index} style={styles.logEntry}>
+                                        <p style={styles.text}>
+                                            <strong style={styles.strong}>Timestamp:</strong> {log.timestamp}
+                                        </p>
+                                        <p style={styles.text}>
+                                            <strong style={styles.strong}>LogName:</strong> {log.logName}
+                                        </p>
+                                        <p style={styles.text}>
+                                            <strong style={styles.strong}>Endpoint:</strong> {log.jsonPayload?.endpoint}
+                                        </p>
+                                        <p style={styles.text}>
+                                            <strong style={styles.strong}>Deployed Model ID:</strong> {log.jsonPayload?.deployedModelId}
+                                        </p>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
 
                     <div style={styles.summaryBox}>
-                        <h2 style={{ textAlign: "center" }}>Summary</h2>
+                        <h2 style={{ textAlign: "center" }}>Summary of Resolution</h2>
                         <p>{summary.text}</p>
 
                         <h3>Possible Solutions & Analysis</h3>
@@ -287,7 +330,10 @@ function LandingPage() {
                                 <p><strong>Reasoning:</strong> {solution.reasoning}</p>
                             </div>
                         ))}
+                    </div>
 
+                    <div style={styles.box}>
+                        <h2 style={{ textAlign: "center" }}>Action Items</h2>
                         <h3>Resolution Script</h3>
                         <pre style={{ background: "#f4f4f4", padding: "10px", borderRadius: "5px", overflowX: "auto" }}>
                             {summary.script}
@@ -301,11 +347,7 @@ function LandingPage() {
                             {summary.restartCommand}
                         </pre>
 
-                    </div>
-
-                    <div style={styles.box}>
-                        <h2 style={{ textAlign: "center" }}>Recommended playbooks</h2>
-
+                        <h4>Ansible Playbook:</h4>
                         <button style={styles.button}>Run Playbook</button>
                     </div>
                 </div>
@@ -412,6 +454,37 @@ const styles = {
         borderRadius: "3px",
         backgroundColor: "#fdfdfd",
     },
+    fullBox: {
+        gridColumn: "1 / -1", // This makes it span across all columns in the grid
+        padding: "20px",
+        border: "1px solid #8B0000",
+        borderRadius: "3px",
+        backgroundColor: "#EEEEEE",
+        color: "black",
+        textAlign: "left",
+        minHeight: "200px",
+        boxShadow: "2px 2px 5px rgba(0, 0, 0, 0.1)",
+    },
+    logscontainer: {
+        backgroundColor: "#7a2822",
+        color: "white",
+        padding: "16px",
+        borderRadius: "8px",
+        height: "24rem",
+        overflow: "auto",
+    },
+    logEntry: {
+        borderBottom: "1px solid black",
+        paddingBottom: "8px",
+        marginBottom: "8px",
+    },
+    text: {
+        fontSize: "14px",
+    },
+    strong: {
+        fontWeight: "bold",
+    },
+
 };
 
 export default LandingPage;

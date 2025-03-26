@@ -1,5 +1,6 @@
 const GoogleGenerativeAI = require("@google/generative-ai").GoogleGenerativeAI;
 require("dotenv").config();
+const { Logging } = require("@google-cloud/logging");
 
 const express = require("express");
 const axios = require("axios");
@@ -7,6 +8,8 @@ const cors = require("cors");
 const { genai, types } = require('@google-cloud/vertexai');
 const { VertexAI } = require("@google-cloud/vertexai");
 const fs = require('fs');
+const { log } = require("util");
+// const logging1 = new Logging({383753837684});
 
 const app = express();
 const PORT = 5000;
@@ -22,6 +25,10 @@ const siText1Content = fs.readFileSync('./prompt.txt', 'utf8');
 const siText1 = {
     text: siText1Content
 };
+
+const logging = new Logging({
+    projectId: "383753837684",
+});
 
 
 app.get("/get-incident-details/:incident_number", async (req, res) => {
@@ -136,25 +143,37 @@ app.post("/generate-summary", async (req, res) => {
 });
 
 
+
 app.get("/logs", async (req, res) => {
     try {
-      const [entries] = await logging.getEntries({
-        resourceNames: [`projects/383753837684`],
-        orderBy: "timestamp desc",
-        pageSize: 5,
-      });
-  
-      const logs = entries.map((entry, index) => ({
-        index: index + 1,
-        timestamp: entry.timestamp,
-        logData: entry.data,
-      }));
-  
-      res.json({ logs });
+        console.log("get logs");
+        const token = process.env.GOOGLE_BEARER_TOKEN;
+        if (!token) {
+            return res.status(500).json({ error: "Bearer token is missing. Check your .env file." });
+        }
+
+        const url = "https://logging.googleapis.com/v2/entries:list";
+
+        const requestBody = {
+            resourceNames: ["projects/383753837684"],
+            filter: 'resource.type="aiplatform.googleapis.com/Endpoint" AND resource.labels.endpoint_id="2408805676085149696" AND resource.labels.location="us-east1"',
+            orderBy: "timestamp desc",
+            pageSize: 5
+        };
+
+        const headers = {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+        };
+
+        const response = await axios.post(url, requestBody, { headers });
+
+        res.json(response.data);
     } catch (error) {
-      console.error("Error fetching logs:", error);
-      res.status(500).json({ error: "Failed to fetch logs" });
+        console.error("Error fetching logs:", error.response ? error.response.data : error.message);
+        res.status(500).json({ error: "Failed to fetch logs" });
     }
-  });
+});
+
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
