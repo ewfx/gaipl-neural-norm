@@ -9,7 +9,6 @@ const { genai, types } = require('@google-cloud/vertexai');
 const { VertexAI } = require("@google-cloud/vertexai");
 const fs = require('fs');
 const { log } = require("util");
-// const logging1 = new Logging({383753837684});
 
 const app = express();
 const PORT = 5000;
@@ -34,7 +33,6 @@ const logging = new Logging({
 app.get("/get-incident-details/:incident_number", async (req, res) => {
     try {
         const incidentNumber = req.params.incident_number;
-        console.log("Incident number:", incidentNumber);
         const SERVICE_NOW_URL = `https://${process.env.SERVICENOW_INSTANCE}.service-now.com/api/1661930/addincidents/get_incident_info?incident_number=${incidentNumber}`;
 
         const response = await axios.get(SERVICE_NOW_URL, {
@@ -57,7 +55,6 @@ app.get("/get-incident-details/:incident_number", async (req, res) => {
 app.get("/get-all-related-data/:ci_name", async (req, res) => {
     try {
         const ciname = req.params.ci_name;
-        console.log("CI name:", ciname);
         const SERVICE_NOW_URL = `https://${process.env.SERVICENOW_INSTANCE}.service-now.com/api/1661930/addincidents/all_related?ci_name=${ciname}`;
         const response = await axios.get(SERVICE_NOW_URL, {
             auth: {
@@ -146,7 +143,6 @@ app.post("/generate-summary", async (req, res) => {
 
 app.get("/logs", async (req, res) => {
     try {
-        console.log("get logs");
         const token = process.env.GOOGLE_BEARER_TOKEN;
         if (!token) {
             return res.status(500).json({ error: "Bearer token is missing. Check your .env file." });

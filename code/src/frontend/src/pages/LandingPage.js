@@ -59,7 +59,6 @@ function LandingPage() {
             // Second API call: Get related data
             const relatedDataResponse = await axios.get(`http://localhost:5000/get-all-related-data/${incidentData.cmdb_ci.name}`);
             const relatedData = relatedDataResponse.data;
-            console.log("All related data: ", relatedData);
 
             // Update state for related CIs
             setCiInformation(relatedData.related_cis);
@@ -85,7 +84,6 @@ function LandingPage() {
                     description: incidentData.short_description,
                 });
 
-                console.log("Raw JSON response: ", summaryResponse);
                 const outerParsed = JSON.parse(summaryResponse.data.result);
                 let jsonText = outerParsed.parts[0].text.trim();
 
@@ -95,7 +93,6 @@ function LandingPage() {
                 jsonText = jsonText.slice(0, -4).trim();
 
                 const parsedData = JSON.parse(jsonText);
-                console.log("Final parsed summary: ", parsedData);
 
                 setSummary(parsedData);
             } catch (summaryErr) {
@@ -114,10 +111,8 @@ function LandingPage() {
 
     const getLogs = async () => {
         try {
-            console.log("IN LOGS");
             const logsdata = await axios.get(`http://localhost:5000/logs`);
             const data = logsdata.data;
-            console.log("LogsData: ", data.entries);
             setLogs(data.entries);
         }
         catch (err) {
@@ -131,7 +126,6 @@ function LandingPage() {
             setError("Please enter a valid incident number.");
             return;
         }
-        console.log("ingetlogs");
         getLogs();
         localStorage.setItem("incidentNumber", inputValue);
         fetchIncidentDetails(inputValue);
@@ -395,8 +389,8 @@ const styles = {
     },
     gridContainer: {
         display: "grid",
-        gridTemplateColumns: "repeat(2, 1fr)", /* Two equal columns */
-        alignItems: "stretch", /* Ensures all boxes stay the same height */
+        gridTemplateColumns: "repeat(2, 1fr)",
+        alignItems: "stretch",
         gap: "20px",
         marginTop: "20px",
     },
