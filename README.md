@@ -1,15 +1,15 @@
 # 🚀 UNITI - Unified Networked Infra & Tech Intelligence
 
 ## 📌 Table of Contents
-- [Introduction] {#introduction}
-- [Demo] {#demo}
-- [Inspiration] {#inspiration}
-- [What It Does] {#what-it-does}
-- [How We Built It] {#how-we-built-it}
-- [Challenges We Faced] {#challenges-we-faced}
-- [How to Run] {#how-to-run}
-- [Tech Stack] {#tech-stack}
-- [Team] {#team}
+- [Introduction](#introductio)
+- [Demo](#demo)
+- [Inspiration](#inspiration)
+- [What It Does](#what-it-does)
+- [How We Built It](#how-we-built-it)
+- [Challenges We Faced](#challenges-we-faced)
+- [How to Run](#how-to-run)
+- [Tech Stack](#tech-stack)
+- [Team](#team)
 
 ---
 
@@ -24,8 +24,11 @@ With built-in automation and Ansible playbook execution, teams can resolve issue
 📹 [Video Demo](artifacts/demo/Video_demo.mp4)
 
 🖼️ Screenshots:
-
-![Screenshot 1](link-to-image)
+![Screenshot 1](artifacts/demo/1.jpeg)
+![Screenshot 2](artifacts/demo/2.jpeg)
+![Screenshot 3](artifacts/demo/3.jpeg)
+![Screenshot 4](artifacts/demo/4.jpeg)
+![Screenshot 5](artifacts/demo/5.jpeg)
 
 ## 💡 Inspiration
 Sajeev and Abhishek, with years of experience in infrastructure and troubleshooting, faced the challenge of managing data across multiple tools to resolve issues efficiently. They envisioned a unified platform that consolidates all information in one place, streamlining the troubleshooting process for system engineers.
