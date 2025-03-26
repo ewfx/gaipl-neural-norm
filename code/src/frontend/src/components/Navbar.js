@@ -29,7 +29,6 @@ const styles = {
         justifyContent: "space-between",
         padding: "10px 20px",
         backgroundColor: "#D84040", 
-        /*padding: "15px 0",*/
         color: "white",
         textAlign: "center",
     },
@@ -48,7 +47,7 @@ const styles = {
     link: {
         margin: "0 15px",
         textDecoration: "none",
-        color: "#ffffff", // White text for contrast
+        color: "#ffffff",
         fontSize: "18px",
         fontWeight: "bold",
     },

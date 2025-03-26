@@ -86,11 +86,6 @@ function LandingPage() {
                 });
 
                 console.log("Raw JSON response: ", summaryResponse);
-                /* const summaryResponse = {
-                    "result": "{\"role\":\"model\",\"parts\":[{\"text\":\"```json\\n{\\n  \\\"text\\\": \\\"Based on the provided incident reports, the 'apache service is down' issue seems to be occurring across multiple nodes, suggesting a potential systemic problem rather than isolated server failures.  While individual server restarts (BSOD) and monitoring agent restarts have resolved some instances, the recurring nature and spread across different nodes points to a broader issue.  Let's investigate further.\\\",\\n  \\\"solutions\\\": [\\n    {\\n      \\\"title\\\": \\\"Network Connectivity Issues\\\",\\n      \\\"likelihood\\\": \\\"High\\\",\\n      \\\"confidence\\\": \\\"0.8\\\",\\n      \\\"reasoning\\\": \\\"A significant number of incidents cite 'network flip' as the root cause.  This suggests a network-level problem impacting the ability of nodes to communicate with BBC and each other.  This could be a DNS resolution issue, firewall rules, routing problems, or a broader network outage.\\\"\\n    },\\n    {\\n      \\\"title\\\": \\\"System-Wide Configuration Problem\\\",\\n      \\\"likelihood\\\": \\\"Medium\\\",\\n      \\\"confidence\\\": \\\"0.6\\\",\\n      \\\"reasoning\\\": \\\"If the network is stable, a misconfiguration in the Apache setup across multiple servers could be the culprit. This could involve incorrect settings in the Apache configuration files, shared configuration repositories, or issues with the deployment process.\\\"\\n    }\\n  ],\\n  \\\"script\\\": \\\"#!/bin/bash\\\\n\\\\n# Check Network Connectivity\\\\nping -c 3 bbc.example.com  # Replace bbc.example.com with the actual address\\\\nif [ $? -ne 0 ]; then\\\\n  echo \\\\\\\"Network connectivity to BBC is down. Investigate network issues.\\\\\\\"\\\\nexit 1\\\\nfi\\\\n\\\\n# Check Apache Status\\\\n\\\\n# Check Apache Configuration (if network connectivity is good)\\\\n\\\\n# Check Server Logs\\\\n\\\",\\n  \\\"logPath\\\": \\\"/var/log/apache2/error.log\\\",\\n  \\\"restartCommand\\\": \\\"sudo systemctl restart apache2\\\"\\n}\\n```\\n\"}]}"
-                }; */
-
-                // Parse response
                 const outerParsed = JSON.parse(summaryResponse.data.result);
                 let jsonText = outerParsed.parts[0].text.trim();
 
@@ -99,7 +94,6 @@ function LandingPage() {
                 }
                 jsonText = jsonText.slice(0, -4).trim();
 
-                // Convert JSON text to object
                 const parsedData = JSON.parse(jsonText);
                 console.log("Final parsed summary: ", parsedData);
 
@@ -122,7 +116,6 @@ function LandingPage() {
         try {
             console.log("IN LOGS");
             const logsdata = await axios.get(`http://localhost:5000/logs`);
-            //const logsdata = `{"entries":[{"insertId":"akr40tc19k","jsonPayload":{"endpoint":"projects/383753837684/locations/us-east1/endpoints/2408805676085149696","deployedModelId":"2280857706984112128","@type":"type.googleapis.com/google.cloud.aiplatform.logging.OnlinePredictionLogEntry"},"resource":{"type":"aiplatform.googleapis.com/Endpoint","labels":{"resource_container":"bamboo-cairn-454605-s9","location":"us-east1","endpoint_id":"2408805676085149696"}},"timestamp":"2025-03-24T08:46:03.419146618Z","logName":"projects/bamboo-cairn-454605-s9/logs/aiplatform.googleapis.com%2Fprediction_access","receiveTimestamp":"2025-03-24T08:46:04.749456990Z"},{"insertId":"13es12qbqs","jsonPayload":{"@type":"type.googleapis.com/google.cloud.aiplatform.logging.OnlinePredictionLogEntry","endpoint":"projects/383753837684/locations/us-east1/endpoints/2408805676085149696","deployedModelId":"2280857706984112128"},"resource":{"type":"aiplatform.googleapis.com/Endpoint","labels":{"endpoint_id":"2408805676085149696","resource_container":"bamboo-cairn-454605-s9","location":"us-east1"}},"timestamp":"2025-03-24T08:46:02.332685557Z","logName":"projects/bamboo-cairn-454605-s9/logs/aiplatform.googleapis.com%2Fprediction_access","receiveTimestamp":"2025-03-24T08:46:03.223502984Z"},{"insertId":"1thc91sc1iq","jsonPayload":{"deployedModelId":"2280857706984112128","endpoint":"projects/383753837684/locations/us-east1/endpoints/2408805676085149696","@type":"type.googleapis.com/google.cloud.aiplatform.logging.OnlinePredictionLogEntry"},"resource":{"type":"aiplatform.googleapis.com/Endpoint","labels":{"resource_container":"bamboo-cairn-454605-s9","endpoint_id":"2408805676085149696","location":"us-east1"}},"timestamp":"2025-03-24T08:45:59.613777687Z","logName":"projects/bamboo-cairn-454605-s9/logs/aiplatform.googleapis.com%2Fprediction_access","receiveTimestamp":"2025-03-24T08:46:01.299987338Z"}],"nextPageToken":"epABCosBAfQucPgafMQn8HMSL7E5eTE-OHz5U3cNUZb7VLsrKbkvjgARRuZ4vNU9pJEpa5F8OdXuUxrWDUkYt19pgzSQc3corUtyyUcgdSXzCZi-kex9Ty-Qt0TCytd-ZmkSYISaBVGdhoVMQx_HzQGaftLxe5K6doByp5lzD5oFUf_6yCAjvdrUiaCcaGlERBAA"}`
             const data = logsdata.data;
             console.log("LogsData: ", data.entries);
             setLogs(data.entries);
@@ -142,6 +135,10 @@ function LandingPage() {
         getLogs();
         localStorage.setItem("incidentNumber", inputValue);
         fetchIncidentDetails(inputValue);
+    };
+
+    const runPlaybook = async () => {
+        //Makes API call to Ansible
     };
 
     return (
@@ -335,7 +332,14 @@ function LandingPage() {
                     <div style={styles.box}>
                         <h2 style={{ textAlign: "center" }}>Action Items</h2>
                         <h3>Resolution Script</h3>
-                        <pre style={{ background: "#f4f4f4", padding: "10px", borderRadius: "5px", overflowX: "auto" }}>
+                        <pre style={{
+                            background: "#f4f4f4",
+                            padding: "10px",
+                            borderRadius: "5px",
+                            overflowX: "auto",
+                            whiteSpace: "pre-wrap", 
+                            wordBreak: "break-word", 
+                        }}>
                             {summary.script}
                         </pre>
 
@@ -343,12 +347,18 @@ function LandingPage() {
                         <p>{summary.logPath}</p>
 
                         <h4>Restart Command:</h4>
-                        <pre style={{ background: "#f4f4f4", padding: "5px", borderRadius: "5px" }}>
+                        <pre style={{
+                            background: "#f4f4f4",
+                            padding: "5px",
+                            borderRadius: "5px",
+                            whiteSpace: "pre-wrap",
+                            wordBreak: "break-word",
+                        }}>
                             {summary.restartCommand}
                         </pre>
 
                         <h4>Ansible Playbook:</h4>
-                        <button style={styles.button}>Run Playbook</button>
+                        <button style={styles.button} onClick={runPlaybook}>Run Playbook</button>
                     </div>
                 </div>
             )}
@@ -455,7 +465,7 @@ const styles = {
         backgroundColor: "#fdfdfd",
     },
     fullBox: {
-        gridColumn: "1 / -1", // This makes it span across all columns in the grid
+        gridColumn: "1 / -1",
         padding: "20px",
         border: "1px solid #8B0000",
         borderRadius: "3px",
