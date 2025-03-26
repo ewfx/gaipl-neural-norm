@@ -1,4 +1,4 @@
-# 🚀 UNITI (Unified Networked Infrastruture & Technology Intelligence)
+# 🚀 UNITI - Unified Networked Infra & Tech Intelligence
 
 ## 📌 Table of Contents
 - [Introduction](#introduction)
