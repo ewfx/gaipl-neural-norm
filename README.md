@@ -21,7 +21,7 @@ By integrating ServiceNow, Google Vertex AI, and Gemini 2.0, our platform automa
 With built-in automation and Ansible playbook execution, teams can resolve issues faster, reduce manual work, and keep systems running smoothly. Our goal? To take the frustration out of IT operations and give engineers the tools they need to work smarter, not harder.
 
 ## 🎥 Demo 
-📹 [Video Demo](main/artifacts/demo/Video_demo.mp4)
+📹 [Video Demo](artifacts/demo/Video_demo.mp4)
 
 🖼️ Screenshots:
 
