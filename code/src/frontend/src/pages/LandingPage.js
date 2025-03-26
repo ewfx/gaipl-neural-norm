@@ -162,7 +162,7 @@ function LandingPage() {
 
                     <div style={styles.box}>
                         <h2 style={{ textAlign: "center" }}>CI Information</h2>
-                        <p><strong>CI Number: </strong>{ciNum !== null && ciNum !== undefined ? ciNum : "N/A"}</p>
+                        <p><strong>CI Name: </strong>{ciNum !== null && ciNum !== undefined ? ciNum : "N/A"}</p>
                         <p><strong>IP Address: </strong>{ip !== null && ip !== undefined ? ip : "N/A"}</p>
 
                         <div style={styles.panel}>

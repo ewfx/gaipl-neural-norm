@@ -8,7 +8,7 @@ function Navbar() {
                 <img src="/logo_charriot.jpg" alt="Logo" style={styles.logo} />
             </div>
             <nav style={styles.navbar}>
-                <h1 style={styles.navTitle}>Integrated Platform Support Portal</h1>
+                <h1 style={styles.navTitle}>UNITI</h1>
             </nav>
             <div style={styles.links}>
                 <Link to="/" style={styles.link}>Home</Link>
